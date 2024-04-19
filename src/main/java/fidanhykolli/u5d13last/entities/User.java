@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
+
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,7 +61,7 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + this.getRole()));
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + this.role));
         return authorities;
     }
 

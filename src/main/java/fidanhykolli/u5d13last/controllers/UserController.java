@@ -3,64 +3,47 @@ package fidanhykolli.u5d13last.controllers;
 import fidanhykolli.u5d13last.entities.User;
 import fidanhykolli.u5d13last.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
-@Controller
+@RestController
 @RequestMapping("/users")
 public class UserController {
+
     @Autowired
-    private UserService userService;
+    UserService userService;
 
 
+    @GetMapping("/allUsers")
+    public List<User> getUsers() {
+        return userService.getAllUsers();
+    }
 
     @PostMapping("/register")
-    public String registerUser(@ModelAttribute("user") User user) {
-        userService.saveUser(user);
-        return "redirect:/login";
+    public ResponseEntity<String> createUser(@RequestBody User user) {
+        try {
+            userService.registerUser(user);
+            return new ResponseEntity<>("Utente creato con successo.", HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Errore durante la creazione dell'utente.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @GetMapping("/profile")
-    public String showUserProfile(Principal principal, Model model) {
-        String username = principal.getName();
-        User user = userService.findByUsername(username);
-        model.addAttribute("user", user);
-        return "userProfile";
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
     }
 
-    @Secured("ROLE_ADMIN")
-    @GetMapping("")
-    public String showAllUsers(Model model) {
-        List<User> users = userService.getAllUsers();
-        model.addAttribute("users", users);
-        return "userList";
-    }
-
-    @Secured("ROLE_ADMIN")
-    @GetMapping("/{id}/edit")
-    public String showEditForm(@PathVariable("id") Long id, Model model) {
-        User user = userService.getUserById(id);
-        model.addAttribute("user", user);
-        return "editUserForm";
-    }
-
-    @Secured("ROLE_ADMIN")
-    @PostMapping("/{id}/edit")
-    public String updateUser(@PathVariable("id") Long id, @ModelAttribute("user") User user) {
-        user.setId(id);
-        userService.saveUser(user);
-        return "redirect:/users";
-    }
-
-    @Secured("ROLE_ADMIN")
-    @GetMapping("/{id}/delete")
-    public String deleteUser(@PathVariable("id") Long id) {
-        userService.deleteUser(id);
-        return "redirect:/users";
+    @PutMapping("/{userId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void updateUser(@PathVariable Long userId, @RequestBody User updatedUser) {
+        userService.updateUser(userId, updatedUser);
     }
 }
